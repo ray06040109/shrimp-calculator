@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>養殖場營運與成本效益連動試算表</title>
+    <style>
+        body {
+            font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
+            background-color: #f4f6f9;
+            margin: 20px;
+            color: #333;
+        }
+        h2 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        th, td {
+            border: 1px solid #b0c4de;
+            padding: 8px 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #e2eef9;
+            font-weight: bold;
+            color: #2c3e50;
+            text-align: center;
+        }
+        input[type="number"] {
+            width: 110px;
+            padding: 4px 6px;
+            border: 1px solid #3498db;
+            border-radius: 4px;
+            background-color: #ffffff;
+            font-weight: bold;
+            color: #1a5276;
+            font-size: 14px;
+        }
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #1b4f72;
+            box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+        }
+        .readonly-val {
+            font-weight: bold;
+            color: #d35400;
+            background-color: rgba(255, 255, 255, 0.5);
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        .highlight-blue { background-color: #e8f4f8; }
+        .highlight-green { background-color: #e8f8f5; }
+        .highlight-pink { background-color: #fdebd0; }
+        .highlight-purple { background-color: #f5eeed; }
+        .highlight-yellow { background-color: #fef9e7; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>養殖場營運與成本效益連動試算表</h2>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 25%;">養殖場 / 項目</th>
+                <th style="width: 25%;">數值 (可手動輸入) / 連動計算結果</th>
+                <th style="width: 25%;">備註</th>
+                <th style="width: 25%;">備註 2</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr class="highlight-blue">
+                <td>土地面積m²</td>
+                <td><input type="number" id="land_area" value="20000" oninput="calculate()"> m²</td>
+                <td>2公頃土地</td>
+                <td></td>
+            </tr>
+            <tr class="highlight-blue">
+                <td>建蔽率%</td>
+                <td><input type="number" id="coverage_rate" value="80" oninput="calculate()"> %</td>
+                <td>漁電室內養殖場</td>
+                <td></td>
+            </tr>
+            <tr class="highlight-blue">
+                <td>室內養殖比例%</td>
+                <td><input type="number" id="indoor_ratio" value="50" oninput="calculate()"> %</td>
+                <td>漁電室內養殖場</td>
+                <td></td>
+            </tr>
+            <tr class="highlight-blue">
+                <td>養殖水深m</td>
+                <td><input type="number" id="water_depth" value="1.5" step="0.1" oninput="calculate()"> m</td>
+                <td>依據養殖技術、案場狀況調整</td>
+                <td></td>
+            </tr>
+            <tr class="highlight-blue">
+                <td>總水體體積 m³</td>
+                <td><span class="readonly-val" id="total_water_vol">12000</span> m³</td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr class="highlight-blue">
+                <td>養殖密度(隻/m³)</td>
+                <td><input type="number" id="density" value="200" oninput="calculate()"> 隻/m³</td>
+                <td>依據養殖技術、案場狀況調整</td>
+                <td></td>
+            </tr>
+            <tr class="highlight-blue">
+                <td>單期放養量(隻)</td>
+                <td><span class="readonly-val" id="stocking_qty">2400000</span> 隻</td>
+                <td>種類白蝦 P10幼苗</td>
+                <td>附表7</td>
+            </tr>
+            <tr class="highlight-blue">
+                <td>存活率%</td>
+                <td><input type="number" id="survival_rate" value="70" oninput="calculate()"> %</td>
+                <td>依據養殖技術、案場狀況調整</td>
+                <td>養殖人員照顧好養殖物種，提升存活率 ↑</td>
+            </tr>
+            <tr class="highlight-blue">
+                <td>單期收成量(隻)</td>
+                <td><span class="readonly-val" id="harvest_qty">1680000</span> 隻</td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr class="highlight-blue">
+                <td>規格(隻/kg)</td>
+                <td><input type="number" id="shrimp_spec" value="50" oninput="calculate()"> 隻</td>
+                <td>每1kg有50隻</td>
+                <td></td>
+            </tr>
+            <tr class="highlight-blue">
+                <td>單期總重量(kg)</td>
+                <td><span class="readonly-val" id="harvest_weight">33600</span> kg</td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr class="highlight-blue">
+                <td>年養殖期數</td>
+                <td><input type="number" id="cycles_per_year" value="3" oninput="calculate()"> 次</td>
+                <td>一期3個月</td>
+                <td></td>
+            </tr>
+            <tr class="highlight-blue">
+                <td>年總產量(kg)</td>
+                <td><span class="readonly-val" id="annual_yield">100800</span> kg</td>
+                <td></td>
+                <td></td>
+            </tr>
+
+            <tr class="highlight-green">
+                <td>FCR</td>
+                <td><input type="number" id="fcr" value="1.5" step="0.1" oninput="calculate()"></td>
+                <td>依據養殖技術、案場狀況、飼料投餵狀況調整</td>
+                <td>建議養殖人員有投餵養殖物種相關知識，投餵好，FCR ↓</td>
+            </tr>
+            <tr class="highlight-green">
+                <td>年飼料總用量(國內 : kg)</td>
+                <td><input type="number" id="feed_dom_qty" value="0" oninput="calculate()"> kg</td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr class="highlight-green">
+                <td>飼料單價(國內 : 元)</td>
+                <td><input type="number" id="feed_dom_price" value="0" oninput="calculate()"> 元</td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr class="highlight-green">
+                <td>年飼料總用量(進口 : kg)</td>
+                <td><span class="readonly-val" id="feed_imp_qty">151200</span> kg</td>
+                <td>依據養殖技術、案場狀況、飼料投餵狀況調整</td>
+                <td></td>
+            </tr>
+            <tr class="highlight-green">
+                <td>飼料單價(進口 : 美元/kg)</td>
+                <td><input type="number" id="feed_imp_usd_price" value="1.56" step="0.01" oninput="calculate()"> 美元/kg</td>
+                <td>進口蝦飼料</td>
+                <td></td>
+            </tr>
+            <tr class="highlight-green">
+                <td>匯率(美元)</td>
+                <td><input type="number" id="usd_rate" value="31.56" step="0.01" oninput="calculate()"> 美元</td>
+                <td>依據買的當下波動：附表5</td>
+                <td></td>
+            </tr>
+            <tr class="highlight-green">
+                <td>飼料總成本</td>
+                <td><span class="readonly-val" id="feed_total_cost">7444120</span> 元</td>
+                <td></td>
+                <td></td>
+            </tr>
+
+            <tr class="highlight-purple">
+                <td>大盤平均價格(元/kg)</td>
+                <td><input type="number" id="wholesale_price" value="257.2" step="0.1" oninput="calculate()"> 元/kg</td>
+                <td>白蝦</td>
+                <td></td>
+            </tr>
+            <tr class="highlight-purple">
+                <td>年營業收入(元)</td>
+                <td><span class="readonly-val" id="annual_revenue">25925760</span> 元</td>
+                <td></td>
+                <td></td>
+            </tr>
+
+            <tr class="highlight-yellow">
+                <td>土地(公頃)</td>
+                <td><span class="readonly-val" id="land_hectare">2</span> 公頃</td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr class="highlight-yellow">
+                <td>一公頃租金(年)</td>
+                <td><input type="number" id="rent_per_ha" value="400000" oninput="calculate()"> 元</td>
+                <td>附表3</td>
+                <td></td>
+            </tr>
+            <tr class="highlight-yellow">
+                <td>年養殖幼苗成本(元)</td>
+                <td><span class="readonly-val" id="annual_larvae_cost">4320000</span> 元</td>
+                <td>大宗批發單價(尾): <input type="number" id="larvae_unit_price" value="0.06" step="0.01" style="width:70px;" oninput="calculate()"> 元</td>
+                <td></td>
+            </tr>
+            <tr class="highlight-yellow">
+                <td>年水費(元)</td>
+                <td><input type="number" id="water_cost" value="600000" oninput="calculate()"> 元</td>
+                <td>附表2</td>
+                <td></td>
+            </tr>
+            <tr class="highlight-yellow">
+                <td>年電費(元)</td>
+                <td><input type="number" id="elec_cost" value="800000" oninput="calculate()"> 元</td>
+                <td>附表2 (一公頃使用電費: 400,000元)</td>
+                <td></td>
+            </tr>
+            <tr class="highlight-yellow">
+                <td>年人事費(元)</td>
+                <td><span class="readonly-val" id="labor_cost">1120000</span> 元</td>
+                <td>
+                    專業養殖人員 <input type="number" id="pro_staff_num" value="1" style="width:50px;" oninput="calculate()">人 
+                    (年薪 <input type="number" id="pro_staff_salary" value="700000" style="width:85px;" oninput="calculate()">)
+                    <br>
+                    一般員工 <input type="number" id="gen_staff_num" value="1" style="width:50px;" oninput="calculate()">人 
+                    (年薪 <input type="number" id="gen_staff_salary" value="420000" style="width:85px;" oninput="calculate()">)
+                </td>
+                <td></td>
+            </tr>
+            <tr class="highlight-yellow">
+                <td>年維護費(元)</td>
+                <td><input type="number" id="maint_cost" value="800000" oninput="calculate()"> 元</td>
+                <td>附表6</td>
+                <td></td>
+            </tr>
+            <tr class="highlight-yellow">
+                <td>土地年租金費(元)</td>
+                <td><span class="readonly-val" id="land_rent_total">800000</span> 元</td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr class="highlight-yellow">
+                <td>年營運成本(元)</td>
+                <td><span class="readonly-val" id="annual_op_cost">12396120.3</span> 元</td>
+                <td></td>
+                <td></td>
+            </tr>
+
+            <tr class="highlight-purple">
+                <td>年淨利潤(元)</td>
+                <td><span class="readonly-val" id="annual_net_profit">13529639.7</span> 元</td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr class="highlight-blue">
+                <td>建場初始投入成本(Io)(元)</td>
+                <td><input type="number" id="initial_invest" value="65000000" oninput="calculate()"> 元</td>
+                <td>附表1</td>
+                <td></td>
+            </tr>
+            <tr class="highlight-blue">
+                <td>回收期(年)</td>
+                <td><span class="readonly-val" id="payback_period">5</span> 年</td>
+                <td></td>
+                <td></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<script>
+function calculate() {
+    let landArea = parseFloat(document.getElementById('land_area').value) || 0;
+    let coverageRate = (parseFloat(document.getElementById('coverage_rate').value) || 0) / 100;
+    let indoorRatio = (parseFloat(document.getElementById('indoor_ratio').value) || 0) / 100;
+    let waterDepth = parseFloat(document.getElementById('water_depth').value) || 0;
+    
+    let totalWaterVol = landArea * coverageRate * indoorRatio * waterDepth;
+    document.getElementById('total_water_vol').innerText = totalWaterVol.toLocaleString();
+    
+    let density = parseFloat(document.getElementById('density').value) || 0;
+    let stockingQty = totalWaterVol * density;
+    document.getElementById('stocking_qty').innerText = stockingQty.toLocaleString();
+    
+    let survivalRate = (parseFloat(document.getElementById('survival_rate').value) || 0) / 100;
+    let harvestQty = stockingQty * survivalRate;
+    document.getElementById('harvest_qty').innerText = harvestQty.toLocaleString();
+    
+    let shrimpSpec = parseFloat(document.getElementById('shrimp_spec').value) || 1;
+    let harvestWeight = harvestQty / shrimpSpec;
+    document.getElementById('harvest_weight').innerText = harvestWeight.toLocaleString();
+    
+    let cyclesPerYear = parseFloat(document.getElementById('cycles_per_year').value) || 0;
+    let annualYield = harvestWeight * cyclesPerYear;
+    document.getElementById('annual_yield').innerText = annualYield.toLocaleString();
+    
+    let fcr = parseFloat(document.getElementById('fcr').value) || 0;
+    let feedDomQty = parseFloat(document.getElementById('feed_dom_qty').value) || 0;
+    let feedDomPrice = parseFloat(document.getElementById('feed_dom_price').value) || 0;
+    
+    let totalFeedNeeded = annualYield * fcr;
+    let feedImpQty = Math.max(0, totalFeedNeeded - feedDomQty);
+    document.getElementById('feed_imp_qty').innerText = feedImpQty.toLocaleString();
+    
+    let feedImpUsdPrice = parseFloat(document.getElementById('feed_imp_usd_price').value) || 0;
+    let usdRate = parseFloat(document.getElementById('usd_rate').value) || 0;
+    
+    let feedTotalCost = (feedDomQty * feedDomPrice) + (feedImpQty * feedImpUsdPrice * usdRate);
+    document.getElementById('feed_total_cost').innerText = feedTotalCost.toLocaleString(undefined, {maximumFractionDigits: 1});
+    
+    let wholesalePrice = parseFloat(document.getElementById('wholesale_price').value) || 0;
+    let annualRevenue = annualYield * wholesalePrice;
+    document.getElementById('annual_revenue').innerText = annualRevenue.toLocaleString(undefined, {maximumFractionDigits: 1});
+    
+    let landHectare = landArea / 10000;
+    document.getElementById('land_hectare').innerText = landHectare;
+    
+    let rentPerHa = parseFloat(document.getElementById('rent_per_ha').value) || 0;
+    let landRentTotal = landHectare * rentPerHa;
+    document.getElementById('land_rent_total').innerText = landRentTotal.toLocaleString();
+    
+    let larvaeUnitPrice = parseFloat(document.getElementById('larvae_unit_price').value) || 0;
+    let annualLarvaeCost = cyclesPerYear * stockingQty * larvaeUnitPrice;
+    document.getElementById('annual_larvae_cost').innerText = annualLarvaeCost.toLocaleString();
+    
+    let waterCost = parseFloat(document.getElementById('water_cost').value) || 0;
+    let elecCost = parseFloat(document.getElementById('elec_cost').value) || 0;
+    
+    let proStaffNum = parseFloat(document.getElementById('pro_staff_num').value) || 0;
+    let proStaffSalary = parseFloat(document.getElementById('pro_staff_salary').value) || 0;
+    let genStaffNum = parseFloat(document.getElementById('gen_staff_num').value) || 0;
+    let genStaffSalary = parseFloat(document.getElementById('gen_staff_salary').value) || 0;
+    let laborCost = (proStaffNum * proStaffSalary) + (genStaffNum * genStaffSalary);
+    document.getElementById('labor_cost').innerText = laborCost.toLocaleString();
+    
+    let maintCost = parseFloat(document.getElementById('maint_cost').value) || 0;
+    
+    let annualOpCost = feedTotalCost + annualLarvaeCost + waterCost + elecCost + laborCost + maintCost + landRentTotal;
+    document.getElementById('annual_op_cost').innerText = annualOpCost.toLocaleString(undefined, {maximumFractionDigits: 1});
+    
+    let annualNetProfit = annualRevenue - annualOpCost;
+    document.getElementById('annual_net_profit').innerText = annualNetProfit.toLocaleString(undefined, {maximumFractionDigits: 1});
+    
+    let initialInvest = parseFloat(document.getElementById('initial_invest').value) || 0;
+    let paybackPeriod = annualNetProfit > 0 ? (initialInvest / annualNetProfit).toFixed(1) : "無法回收";
+    document.getElementById('payback_period').innerText = paybackPeriod;
+}
+
+window.onload = calculate;
+</script>
+
+</body>
+</html>
