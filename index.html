@@ -1,9 +1,16 @@
+from flask import Flask, render_template_string
+
+app = Flask(__name__)
+
+HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>養殖場營運與成本效益連動試算表</title>
+    <!-- 引入 Chart.js 繪製圖表 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
             font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
@@ -11,7 +18,7 @@
             margin: 20px;
             color: #333;
         }
-        h2 {
+        h2, h3 {
             text-align: center;
             color: #2c3e50;
             margin-bottom: 20px;
@@ -20,7 +27,7 @@
             max-width: 1200px;
             margin: 0 auto;
             background: #fff;
-            padding: 20px;
+            padding: 25px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             border-radius: 8px;
             overflow-x: auto;
@@ -29,6 +36,7 @@
             width: 100%;
             border-collapse: collapse;
             font-size: 14px;
+            margin-bottom: 35px;
         }
         th, td {
             border: 1px solid #b0c4de;
@@ -69,6 +77,19 @@
         .highlight-pink { background-color: #fdebd0; }
         .highlight-purple { background-color: #f5eeed; }
         .highlight-yellow { background-color: #fef9e7; }
+
+        /* 圖表區塊樣式 */
+        .chart-section {
+            margin-top: 35px;
+            padding-top: 25px;
+            border-top: 2px solid #e2eef9;
+        }
+        .chart-wrapper {
+            position: relative;
+            height: 420px;
+            width: 100%;
+            margin-bottom: 30px;
+        }
     </style>
 </head>
 <body>
@@ -301,9 +322,132 @@
             </tr>
         </tbody>
     </table>
+
+    <!-- 第一張圖：10年營運與利潤長條圖 -->
+    <div class="chart-section">
+        <h3>10年營運與利潤趨勢圖 (單位：萬元)</h3>
+        <div class="chart-wrapper">
+            <canvas id="profitBarChart"></canvas>
+        </div>
+    </div>
+
+    <!-- 第二張圖：10年累積淨利潤與初始投入成本折線圖 -->
+    <div class="chart-section">
+        <h3>10年累積淨利潤與建場初始投入成本對照折線圖 (單位：萬元)</h3>
+        <div class="chart-wrapper">
+            <canvas id="cumulativeLineChart"></canvas>
+        </div>
+    </div>
 </div>
 
 <script>
+let profitBarChart = null;
+let cumulativeLineChart = null;
+
+function initCharts() {
+    const labels = ['第1年', '第2年', '第3年', '第4年', '第5年', '第6年', '第7年', '第8年', '第9年', '第10年'];
+    
+    // 1. 初始化長條圖
+    const ctxBar = document.getElementById('profitBarChart').getContext('2d');
+    profitBarChart = new Chart(ctxBar, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: '年營業收入 (萬元)',
+                    data: [],
+                    backgroundColor: 'rgba(41, 128, 185, 0.75)',
+                    borderColor: '#2980b9',
+                    borderWidth: 1
+                },
+                {
+                    label: '年營運成本 (萬元)',
+                    data: [],
+                    backgroundColor: 'rgba(231, 76, 60, 0.75)',
+                    borderColor: '#e74c3c',
+                    borderWidth: 1
+                },
+                {
+                    label: '年淨利潤 (萬元)',
+                    data: [],
+                    backgroundColor: 'rgba(39, 174, 96, 0.75)',
+                    borderColor: '#27ae60',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'top', labels: { font: { size: 14, weight: 'bold' }, padding: 20 } },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + context.parsed.y.toLocaleString() + ' 萬元';
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: { title: { display: true, text: '營運年度 (年)', font: { size: 14, weight: 'bold' } }, grid: { color: '#ecf0f1' } },
+                y: { title: { display: true, text: '金額 (萬元)', font: { size: 14, weight: 'bold' } }, ticks: { callback: function(value) { return value.toLocaleString() + ' 萬'; } }, grid: { color: '#ecf0f1' } }
+            }
+        }
+    });
+
+    // 2. 初始化累積淨利潤與初始投入成本折線圖
+    const ctxLine = document.getElementById('cumulativeLineChart').getContext('2d');
+    cumulativeLineChart = new Chart(ctxLine, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: '累積年淨利潤 (萬元)',
+                    data: [],
+                    borderColor: '#8e44ad',  // 紫色實線
+                    backgroundColor: '#8e44ad',
+                    borderWidth: 3,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    tension: 0.1,
+                    fill: false
+                },
+                {
+                    label: '建場初始投入成本 (Io)',
+                    data: [],
+                    borderColor: '#c0392b',  // 紅色虛線標註
+                    backgroundColor: '#c0392b',
+                    borderWidth: 2,
+                    borderDash: [6, 6],      // 虛線樣式
+                    pointRadius: 0,          // 不顯示資料點
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'top', labels: { font: { size: 14, weight: 'bold' }, padding: 20 } },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + context.parsed.y.toLocaleString() + ' 萬元';
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: { title: { display: true, text: '營運年度 (年)', font: { size: 14, weight: 'bold' } }, grid: { color: '#ecf0f1' } },
+                y: { title: { display: true, text: '金額 (萬元)', font: { size: 14, weight: 'bold' } }, ticks: { callback: function(value) { return value.toLocaleString() + ' 萬'; } }, grid: { color: '#ecf0f1' } }
+            }
+        }
+    });
+}
+
 function calculate() {
     let landArea = parseFloat(document.getElementById('land_area').value) || 0;
     let coverageRate = (parseFloat(document.getElementById('coverage_rate').value) || 0) / 100;
@@ -379,10 +523,50 @@ function calculate() {
     let initialInvest = parseFloat(document.getElementById('initial_invest').value) || 0;
     let paybackPeriod = annualNetProfit > 0 ? (initialInvest / annualNetProfit).toFixed(1) : "無法回收";
     document.getElementById('payback_period').innerText = paybackPeriod;
+
+    // 更新第一張圖：長條圖數據 (換算為萬元)
+    if (profitBarChart) {
+        const revWan = Number((annualRevenue / 10000).toFixed(2));
+        const costWan = Number((annualOpCost / 10000).toFixed(2));
+        const profitWan = Number((annualNetProfit / 10000).toFixed(2));
+
+        profitBarChart.data.datasets[0].data = Array(10).fill(revWan);
+        profitBarChart.data.datasets[1].data = Array(10).fill(costWan);
+        profitBarChart.data.datasets[2].data = Array(10).fill(profitWan);
+        profitBarChart.update();
+    }
+
+    // 更新第二張圖：累積淨利潤折線圖與初始投入成本基準線
+    if (cumulativeLineChart) {
+        const profitWan = Number((annualNetProfit / 10000).toFixed(2));
+        const initialInvestWan = Number((initialInvest / 10000).toFixed(2));
+
+        let cumulativeData = [];
+        let runningSum = 0;
+        for (let i = 0; i < 10; i++) {
+            runningSum += profitWan;
+            cumulativeData.push(Number(runningSum.toFixed(2)));
+        }
+
+        cumulativeLineChart.data.datasets[0].data = cumulativeData;
+        cumulativeLineChart.data.datasets[1].data = Array(10).fill(initialInvestWan);
+        cumulativeLineChart.update();
+    }
 }
 
-window.onload = calculate;
+window.onload = function() {
+    initCharts();
+    calculate();
+};
 </script>
 
 </body>
 </html>
+"""
+
+@app.route('/')
+def index():
+    return render_template_string(HTML_TEMPLATE)
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=True)
