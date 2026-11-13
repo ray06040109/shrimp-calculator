@@ -1,8 +1,3 @@
-from flask import Flask, render_template_string
-
-app = Flask(__name__)
-
-HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -18,11 +13,6 @@ HTML_TEMPLATE = """
             margin: 20px;
             color: #333;
         }
-        h2, h3 {
-            text-align: center;
-            color: #2c3e50;
-            margin-bottom: 20px;
-        }
         .container {
             max-width: 1200px;
             margin: 0 auto;
@@ -31,6 +21,53 @@ HTML_TEMPLATE = """
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             border-radius: 8px;
             overflow-x: auto;
+        }
+        /* 標題與按鈕群組容器 */
+        .header-container {
+            position: relative;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        h2 {
+            margin: 0;
+            color: #2c3e50;
+            text-align: center;
+        }
+        .btn-group {
+            position: absolute;
+            right: 0;
+            display: flex;
+            gap: 10px;
+        }
+        .btn-sample {
+            background-color: #2980b9;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+        }
+        .btn-sample:hover { background-color: #2471a3; }
+        .btn-zero {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+        }
+        .btn-zero:hover { background-color: #c0392b; }
+
+        h3 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 20px;
         }
         table {
             width: 100%;
@@ -78,7 +115,6 @@ HTML_TEMPLATE = """
         .highlight-purple { background-color: #f5eeed; }
         .highlight-yellow { background-color: #fef9e7; }
 
-        /* 圖表區塊樣式 */
         .chart-section {
             margin-top: 35px;
             padding-top: 25px;
@@ -95,7 +131,15 @@ HTML_TEMPLATE = """
 <body>
 
 <div class="container">
-    <h2>養殖場營運與成本效益連動試算表</h2>
+    <!-- 頂部標題與右上角功能按鈕 -->
+    <div class="header-container">
+        <h2>養殖場營運與成本效益連動試算表</h2>
+        <div class="btn-group">
+            <button class="btn-sample" onclick="restoreSample()">恢復範例數值</button>
+            <button class="btn-zero" onclick="restoreZero()">恢復初始數值</button>
+        </div>
+    </div>
+
     <table>
         <thead>
             <tr>
@@ -344,6 +388,52 @@ HTML_TEMPLATE = """
 let profitBarChart = null;
 let cumulativeLineChart = null;
 
+// 預設範例數值物件
+const sampleValues = {
+    land_area: 20000,
+    coverage_rate: 80,
+    indoor_ratio: 50,
+    water_depth: 1.5,
+    density: 200,
+    survival_rate: 70,
+    shrimp_spec: 50,
+    cycles_per_year: 3,
+    fcr: 1.5,
+    feed_dom_qty: 0,
+    feed_dom_price: 0,
+    feed_imp_usd_price: 1.56,
+    usd_rate: 31.56,
+    wholesale_price: 257.2,
+    rent_per_ha: 400000,
+    larvae_unit_price: 0.06,
+    water_cost: 600000,
+    elec_cost: 800000,
+    pro_staff_num: 1,
+    pro_staff_salary: 700000,
+    gen_staff_num: 1,
+    gen_staff_salary: 420000,
+    maint_cost: 800000,
+    initial_invest: 65000000
+};
+
+// 恢復範例數值
+function restoreSample() {
+    for (let id in sampleValues) {
+        let el = document.getElementById(id);
+        if (el) el.value = sampleValues[id];
+    }
+    calculate();
+}
+
+// 恢復初始數值 (全部設為 0)
+function restoreZero() {
+    let inputs = document.querySelectorAll('input[type="number"]');
+    inputs.forEach(input => {
+        input.value = 0;
+    });
+    calculate();
+}
+
 function initCharts() {
     const labels = ['第1年', '第2年', '第3年', '第4年', '第5年', '第6年', '第7年', '第8年', '第9年', '第10年'];
     
@@ -407,7 +497,7 @@ function initCharts() {
                 {
                     label: '累積年淨利潤 (萬元)',
                     data: [],
-                    borderColor: '#8e44ad',  // 紫色實線
+                    borderColor: '#8e44ad',
                     backgroundColor: '#8e44ad',
                     borderWidth: 3,
                     pointRadius: 5,
@@ -418,11 +508,11 @@ function initCharts() {
                 {
                     label: '建場初始投入成本 (Io)',
                     data: [],
-                    borderColor: '#c0392b',  // 紅色虛線標註
+                    borderColor: '#c0392b',
                     backgroundColor: '#c0392b',
                     borderWidth: 2,
-                    borderDash: [6, 6],      // 虛線樣式
-                    pointRadius: 0,          // 不顯示資料點
+                    borderDash: [6, 6],
+                    pointRadius: 0,
                     fill: false
                 }
             ]
@@ -524,7 +614,7 @@ function calculate() {
     let paybackPeriod = annualNetProfit > 0 ? (initialInvest / annualNetProfit).toFixed(1) : "無法回收";
     document.getElementById('payback_period').innerText = paybackPeriod;
 
-    // 更新第一張圖：長條圖數據 (換算為萬元)
+    // 更新長條圖數據
     if (profitBarChart) {
         const revWan = Number((annualRevenue / 10000).toFixed(2));
         const costWan = Number((annualOpCost / 10000).toFixed(2));
@@ -536,7 +626,7 @@ function calculate() {
         profitBarChart.update();
     }
 
-    // 更新第二張圖：累積淨利潤折線圖與初始投入成本基準線
+    // 更新累積折線圖數據
     if (cumulativeLineChart) {
         const profitWan = Number((annualNetProfit / 10000).toFixed(2));
         const initialInvestWan = Number((initialInvest / 10000).toFixed(2));
@@ -562,5 +652,3 @@ window.onload = function() {
 
 </body>
 </html>
-
-
